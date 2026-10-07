@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server'; import {z} from 'zod'; import {getPublicJobs} from '@/lib/public';
+const schema=z.object({q:z.string().optional(),province:z.string().optional(),city:z.string().optional(),category:z.string().optional(),jobType:z.string().optional(),bps:z.string().optional(),education:z.string().optional(),experience:z.string().optional(),sort:z.string().optional()});
+export async function GET(req:Request){const p=Object.fromEntries(new URL(req.url).searchParams);const parsed=schema.safeParse(p);if(!parsed.success)return NextResponse.json({error:'Invalid parameters'},{status:400});return NextResponse.json(await getPublicJobs(parsed.data));}

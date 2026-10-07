@@ -1,0 +1,5 @@
+const enc=new TextEncoder();
+function b64(bytes:Uint8Array){return Buffer.from(bytes).toString('base64url')}
+function fromB64(s:string){return new Uint8Array(Buffer.from(s,'base64url'))}
+export async function hashPassword(password:string){const salt=crypto.getRandomValues(new Uint8Array(16));const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},key,256);return `pbkdf2$210000$${b64(salt)}$${b64(new Uint8Array(bits))}`}
+export async function verifyPassword(password:string,stored:string){const [scheme,it,saltB,hashB]=stored.split('$');if(scheme!=='pbkdf2'||!it||!saltB||!hashB)return false;const key=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:fromB64(saltB),iterations:Number(it),hash:'SHA-256'},key,256);const a=new Uint8Array(bits),b=fromB64(hashB);if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a[i]^b[i];return diff===0}
